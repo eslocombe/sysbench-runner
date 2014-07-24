@@ -22,6 +22,7 @@ goes through the following steps:
 Once complete it shuts down MySQL and aggregates the sysbench results in a CSV file.
 
 OPTIONS:
+   -H   remote host. sets remote options.
    -i   MySQL pid file (required)
    -d   Config directory      				[./conf]
    -s   MySQL socket       				[/tmp/mysql.sock]
@@ -48,9 +49,10 @@ threads="8,16,32,64,128"
 clean=off
 params=
 
-while getopts i:d:h:s:u:p:w:o:r:t:c: name
+while getopts H:i:d:h:s:u:p:w:o:r:t:c: name
 do
   case $name in
+    H) hostname="$OPTARG";;
     i) pid="$OPTARG";;
     d) dir="$OPTARG";;
     s) socket="$OPTARG"
@@ -79,8 +81,15 @@ then
   exit 1
 fi
 
+if [ -n "$hostname" ]
+then
+  # remote settings
+  skiprestart=1
+  clean=off
+fi
+
 # Have we got any config files to process?
-for f in $( ls $dir ); do
+for f in $(find $dir -t file -iname "*.cnf"); do
 
   # Stop mysql if running
   if [ -e $pid ]; then
